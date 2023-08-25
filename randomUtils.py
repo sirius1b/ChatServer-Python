@@ -25,6 +25,7 @@ class Subscriber:
 
     async def update(self, dat) -> None:
         await asyncio.sleep(1)
+        # time.sleep(1)
         self.data.append(dat)
 
 
