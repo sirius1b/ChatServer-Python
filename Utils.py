@@ -9,6 +9,7 @@ class Subscriber:
     def __init__(self, topic: str, name: str):
         self.topic = topic
         self.name = name
+        self.data = None
 
 
     def subscribe(self):
@@ -22,8 +23,8 @@ class Subscriber:
         print(">>> recevied Data: " + data)
         self.data = data
 
-    async def getUpdate(self) -> dict:
-        while (await self.data == None ):
+    def getUpdate(self) -> dict:
+        while ( self.data == None ):
             continue
         return self.data
 

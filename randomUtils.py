@@ -7,27 +7,28 @@ class Subscriber:
     def __init__(self, topic: str, name: str):
         self.topic = topic
         self.name = name
-        self.data = []
+        self.data = None
 
     def subscribe(self):
-        Broker().addSub(self.topic, self)
+       Broker().addSub(self.topic, self)
 
-    def unsubscriber(self):
+    def unsub(self):
         Broker().removeSub(self.topic, self)
 
+    def getUpdate(self):
+      while ( self.data == None):
+        continue
+      out = self.data
+      self.data = None
+      return out
 
-    async def getUpdate(self):
-        while (await len(self.data) > 0):
-            continue
-        out = self.data
-        self.data = []
-        return out
-
-    async def update(self, dat) -> None:
-        await asyncio.sleep(1)
+    async def update(self, data) -> None:
+        print(f'----> got update in {self.name} sub, with data: {data}')
         # time.sleep(1)
-        self.data.append(dat)
+        self.data = data
 
+    def __repr__(self):
+        return f'Subscriber: {self.name}'
 
 class Broker:
     __instance = None
@@ -53,13 +54,17 @@ class Broker:
                 self.subs[topic].remove(sub)
 
     async def push(self, topic, data):
+        print(self.subs)
         t1 = time.perf_counter()
         print(self.subs, topic, data)
+        print(f'----> publish in broker, {time.perf_counter() - t1}')
         if (topic in self.subs.keys()):
             sub: Subscriber
             updates = [sub.update(data) for sub in self.subs[topic]]
+            print(f'----> publish in broker; update calls, {time.perf_counter() - t1}')
             await asyncio.gather(*updates)
-        print(f'{time.perf_counter() - t1} seconds passed')
+            print(f'----> publish in broker; gather await calls, {time.perf_counter() - t1}')
+        print(f'{time.perf_counter() - t1} seconds passed, {time.perf_counter() - t1}')
 
 class Publisher:
     def __init__(self, topic: str, src: str):
@@ -67,6 +72,7 @@ class Publisher:
         self.src = src
 
     async def publish(self, data):
+        print(f'-----> received a publish request with data: {data}')
         await Broker().push(self.topic, data)
 
 if __name__ == "__main__":
