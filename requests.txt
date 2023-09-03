@@ -1,0 +1,9 @@
+curl -X GET https://reqbin.com/echo/post/json
+   -H 'Content-Type: application/json'
+   -d '{"login":"my_login","password":"my_password"}'
+
+
+   curl -X POST http://localhost:6060/get -H 'Content-Type:application/json' -d '{"topic":"top","name":"sub1"}'
+
+   curl -X POST http://localhost:6060/publish -H 'Content-Type:application/json' -d '{"topic":"top","data":"1", "src": "1"}'
+
