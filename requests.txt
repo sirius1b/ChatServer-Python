@@ -1,9 +1,10 @@
-curl -X GET https://reqbin.com/echo/post/json
-   -H 'Content-Type: application/json'
-   -d '{"login":"my_login","password":"my_password"}'
+
+=== listen to events ===
+
+- curl -X POST http://localhost:6060/get -H 'Content-Type:application/json' -d '{"event":"top","name":"sub1"}'
+- curl -X POST http://localhost:6060/get -H 'Content-Type:application/json' -d '{"event":"top","name":"sub2"}'
 
 
-   curl -X POST http://localhost:6060/get -H 'Content-Type:application/json' -d '{"topic":"top","name":"sub1"}'
-
-   curl -X POST http://localhost:6060/publish -H 'Content-Type:application/json' -d '{"topic":"top","data":"1", "src": "1"}'
+=== publish event ===
+- curl -X POST http://localhost:6060/publish -H 'Content-Type:application/json' -d '{"event":"top","data":"this is data", "src": "1"}'
 

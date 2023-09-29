@@ -1,81 +1,64 @@
 
-import asyncio
+
+import threading
+
 
 class Subscriber:
 
-    def __init__(self, topic: str):
-        self.topic = topic
+    def __init__(self):
+        self.eventData = None
 
-    def __init__(self, topic: str, name: str):
-        self.topic = topic
-        self.name = name
-        self.data = None
+    def updateEvent(self, data: str):
+        self.eventData = data
 
-
-    def subscribe(self):
-        Broker().addSub(self.topic, self)
-
-    def unsubscribe(self):
-        Broker().removeSub(self.topic, self)
-
-    async def update(self, data):
-        print(">>>Subcriber: " + self.name)
-        print(">>> recevied Data: " + data)
-        self.data = data
-
-    def getUpdate(self) -> dict:
-        while ( self.data == None ):
+    def getUpdate(self):
+        while ( self.eventData == None):
             continue
-        return self.data
+        return self.eventData
+
 
 class Broker:
     __instance = None
 
     def __new__(cls):
-
         if (cls.__instance is None):
             cls.__instance = super(Broker, cls).__new__(cls)
-            cls.__instance.subs = dict()
+            cls.__instance.subscriptions = dict()
+            cls.__instance.eventQueue = dict()
 
         return cls.__instance
 
-    def addSub(self, topic: str,  sub: Subscriber):
-
-        if topic in self.subs.keys():
-            self.subs[topic].append(sub)
+    def register(self, event: str, subscriber: Subscriber):
+        if (event in self.subscriptions.keys()):
+            self.subscriptions[event] : list
+            self.subscriptions[event].append(subscriber)
         else :
-            self.subs[topic] = [sub]
-        print(self.subs, topic, sub)
+            self.subscriptions[event] = [subscriber]
 
-    def removeSub(self, topic: str, sub: Subscriber):
+    def start(self):
+        self.status = True
+        print("about to in")
+        threading.Thread(target=self.run).start()
+        print("about to out")
 
-        if topic in self.subs.keys():
-            if ( sub in self.subs[topic] ):
-                self.subs[topic].remove(sub)
+    def stop(self):
+        self.status = False
 
-    def push(self, topic, data):
-        print(self.subs, topic, data)
-        if (topic in self.subs.keys()):
-            sub: Subscriber
-            a
-            for sub in self.subs[topic]:
-                sub.update(data)
+    def run(self):
+        while (self.status):
 
-class Publisher:
-    def __init__(self, topic: str, src: str):
-        self.topic = topic
-        self.src = src
+            for event in self.subscriptions.keys():
+                if (event in self.eventQueue.keys() and len(self.eventQueue[event]) > 0):
+                    for subscriber in self.subscriptions[event]:
+                        subscriber: Subscriber
+                        subscriber.updateEvent(self.eventQueue[event][0])
 
-    def publish(self, data):
-        Broker().push(self.topic, data)
+                    self.eventQueue[event].pop(0)
 
-if __name__ == '__main__':
-    topic = "abcd"
-    p = Publisher(topic)
-
-    s1 = Subscriber(topic, "sub-1")
-    s2 = Subscriber(topic, "sub-2")
-    s1.subscribe()
-    s2.subscribe()
-
-    p.publish("this is data")
+    def publish(self, event: str, src: str, data: str):
+        print("now put the data")
+        if (event in self.eventQueue.keys()):
+            self.eventQueue[event] : list
+            self.eventQueue[event].append({"src": src, "data": data})
+        else :
+            self.eventQueue[event] = [{"src": src, "data": data}]

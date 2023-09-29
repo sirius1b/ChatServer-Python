@@ -1,68 +1,68 @@
 import time
 
-from flask import Flask, json, request, jsonify, Response
-from randomUtils import Publisher, Subscriber
-import asyncio
+from flask import Flask, json, request, jsonify
+import signal
+from Utils import Broker, Subscriber
+import threading
 app = Flask(__name__)
 
+
+
+
+
+@app.route('/get', methods=['POST'])
+def get():
+    body: dict
+    body = json.loads(request.get_data())
+
+    if (request.is_json):
+        __validate_get_body(body)
+        event  = body['event']
+        s = Subscriber()
+        Broker().register(event, s)
+        resp_data = s.getUpdate()
+        return jsonify(resp_data, 200)
+    return jsonify({}, 400)
+
+
 @app.route('/publish', methods=['POST'])
-def pub():
+def post():
     t1 = time.perf_counter()
-    body: dict
+    body:dict
     body = json.loads(request.get_data())
+    print(body)
     if (request.is_json):
-        if ('topic' not in body.keys() or 'data' not in body.keys() or  'src' not in body.keys()):
-            raise RuntimeError("Invalid body");
-        else :
-            topic= body['topic'] ; data = body['data']; src = body['src']
-            print(f'>>> received request on topic: {topic} from src: {src}, data: {data}')
-            print(f'>>> time took {time.perf_counter() - t1}')
+        __validateBody(body)
+        print(body)
+        topic= body['event'] ; data = body['data']; src = body['src']
 
-            loop = asyncio.new_event_loop()
-            print(f'>>> time took {time.perf_counter() - t1}, created event loop')
+        print(f'>>> received request on topic: {topic} from src: {src}, data: {data}')
+        print(f'>>> time took {time.perf_counter() - t1}')
 
-            asyncio.set_event_loop(loop)
-            print(f'>>> time took {time.perf_counter() - t1}, set event loop')
-            try:
-                p = Publisher(topic, src)
-                print(f'>>> time took {time.perf_counter() - t1}, instantiated event loop')
-                loop.run_until_complete(p.publish(data)) ## <- this should return immediately; this should be async and nonblocking
-                print(f'>>> time took {time.perf_counter() - t1}, ran the publish')
-            finally:
-                loop.close()
-                print(f'>>> time took {time.perf_counter() - t1}, closed the loop')
-            return jsonify({}, 200)
+        threading.Thread(target=Broker().publish, args=[topic, src, data]).start()
+        # with ThreadPoolExecutor() as executor:
+        #     executor.submit(Broker().publish(topic, src, data))
+        print(f'>>> about to succeed for publish in  {time.perf_counter() - t1}s')
+
+        return jsonify({}, 200)
     return jsonify({}, 400)
 
 
-def format(msg):
-    return f'data: {msg} \n\n'
+def __validateBody(body: dict):
+    if ('event' not in body.keys() or 'data' not in body.keys() or  'src' not in body.keys()):
+        raise RuntimeError("Invalid body")
 
-@app.route('/get', methods=['POST', 'GET'])
-def update():
-    body: dict
-    body = json.loads(request.get_data())
+def __validate_get_body(body: dict):
+    if ('event' not in body.keys()):
+        raise RuntimeError("Invalid body")
 
-    if (request.is_json):
-        if ('topic' not in body.keys() or 'name' not in body.keys()):
-            raise RuntimeError("Invalid body");
-        else :
-            def stream() :
-                s = Subscriber(topic=body['topic'], name=body['name'])
-                try:
-                    s.subscribe()
-                    t1 = time.perf_counter()
-                    while True:
-                        data = s.getUpdate()
-                        value = data + f' |time-> {time.perf_counter() - t1} s'
-                        t1 = time.perf_counter()
-                        yield format(value)
-                finally:
-                    s.unsub()
-                    del s
-            return Response(stream(), mimetype="text/event-stream")
-
-    return jsonify({}, 400)
+def signalHandler(signum, frame):
+    Broker().stop()
+    print("about to shutdown")
+    exit(0)
 
 if __name__ == '__main__':
+
+    signal.signal(signal.SIGINT, signalHandler)
+    Broker().start()
     app.run(port=6060)
