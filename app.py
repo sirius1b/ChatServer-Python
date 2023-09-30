@@ -10,10 +10,13 @@ app = Flask(__name__)
 
 
 
-@app.route('/get', methods=['POST'])
+@app.route('/updates', methods=['POST'])
 def get():
+    print("updatess=------------------")
     body: dict
     body = json.loads(request.get_data())
+    print(request.headers)
+    print(body)
 
     if (request.is_json):
         __validate_get_body(body)
@@ -21,12 +24,14 @@ def get():
         s = Subscriber()
         Broker().register(event, s)
         resp_data = s.getUpdate()
-        return jsonify(resp_data, 200)
-    return jsonify({}, 400)
+        print("returning the respone: " + str(resp_data))
+        return jsonify(resp_data),200
+    return jsonify({}), 400
 
 
 @app.route('/publish', methods=['POST'])
 def post():
+    print("publish--------------")
     t1 = time.perf_counter()
     body:dict
     body = json.loads(request.get_data())
@@ -44,8 +49,8 @@ def post():
         #     executor.submit(Broker().publish(topic, src, data))
         print(f'>>> about to succeed for publish in  {time.perf_counter() - t1}s')
 
-        return jsonify({}, 200)
-    return jsonify({}, 400)
+        return jsonify({}), 200
+    return jsonify({}), 400
 
 
 def __validateBody(body: dict):
@@ -65,4 +70,4 @@ if __name__ == '__main__':
 
     signal.signal(signal.SIGINT, signalHandler)
     Broker().start()
-    app.run(port=6060)
+    app.run(debug=True, port=6060)
