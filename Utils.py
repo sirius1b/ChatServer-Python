@@ -9,14 +9,13 @@ class Subscriber:
         self.eventData = None
 
     def updateEvent(self, data: str):
-        print("updating the eventData: " + str(data))
+
         self.eventData = data
 
     def getUpdate(self):
         while (self.eventData == None):
-            # print("rx noting")
             continue
-        print(self.eventData)
+
         return self.eventData
 
 
@@ -40,9 +39,7 @@ class Broker:
 
     def start(self):
         self.status = True
-        print("about to in")
         threading.Thread(target=self.run).start()
-        print("about to out")
 
     def stop(self):
         self.status = False
@@ -55,11 +52,9 @@ class Broker:
                         subscriber: Subscriber
                         subscriber.updateEvent(self.eventQueue[event][0])
                     self.subscriptions[event] = []
-                    print(self.eventQueue)
                     self.eventQueue[event].pop(0)
 
     def publish(self, event: str, src: str, data: str):
-        print("now put the data")
         if (event in self.eventQueue.keys()):
             self.eventQueue[event] : list
             self.eventQueue[event].append({"src": src, "data": data})
